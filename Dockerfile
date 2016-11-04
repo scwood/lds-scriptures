@@ -8,4 +8,4 @@ RUN npm install
 COPY index.js scriptures.db /app/
 
 EXPOSE 3000
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
