@@ -26,13 +26,11 @@ app.get('/:volume/:book', sendBook);
 app.get('/:volume/:book/:chapter', sendChapter);
 
 function sendVolume(req, res) {
-  db.serialize(() => {
-    const stmt = 'SELECT * FROM volumes WHERE volume_lds_url=?'
-    db.get(stmt, ['bm'], (err, result) => {
-      console.log(err);
-      console.log(result);
-    });
-  });
+  const stmt = 'SELECT * FROM volumes WHERE volume_lds_url=?'
+  db.get(stmt, ['bm'])
+    .then(volume => {
+      console.log(volume);
+    })
 }
 
 function sendBook(req, res) {
@@ -45,6 +43,4 @@ function sendChapter(req, res) {
 
 db.open('scriptures.db')
   .then(() => app.listen(process.env.PORT || 3000))
-
-// ;
-// sendVolume();
+  .then(sendVolume)
