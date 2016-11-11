@@ -1,46 +1,85 @@
-// var sqlite3 = require('sqlite3').verbose();
-// var db = new sqlite3.Database(':memory:');
+import express from 'express';
+import db from 'sqlite';
 
-// db.serialize(function() {
-//   db.run("CREATE TABLE lorem (info TEXT)");
-
-//   var stmt = db.prepare("INSERT INTO lorem VALUES (?)");
-//   for (var i = 0; i < 10; i++) {
-//       stmt.run("Ipsum " + i);
-//   }
-//   stmt.finalize();
-
-//   db.each("SELECT rowid AS id, info FROM lorem", function(err, row) {
-//       console.log(row.id + ": " + row.info);
-//   });
-// });
-
-// db.close();
-
-const express = require('express');
-const db = require('sqlite');
 const app = express();
 
 app.get('/:volume', sendVolume);
 app.get('/:volume/:book', sendBook);
 app.get('/:volume/:book/:chapter', sendChapter);
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(500).send({ error: 'Internal server error.' })
+  next();
+});
 
-function sendVolume(req, res) {
-  const stmt = 'SELECT * FROM volumes WHERE volume_lds_url=?'
-  db.get(stmt, ['bm'])
-    .then(volume => {
-      console.log(volume);
-    })
+async function sendVolume(req, res, next) {
+  try {
+    const volume = await db.get('SELECT * FROM volumes WHERE uri=?', req.params.volume);
+    if (!volume) {
+      res.status(404).send({ error: `Volume not found.` });
+      return;
+    }
+    const books = await db.all('SELECT * FROM books WHERE volumeId=?', volume.id)
+    volume.books = books;
+    res.send({ data: { volume } });
+  } catch (err) {
+    next(err);
+  }
 }
 
-function sendBook(req, res) {
-  res.sendStatus(501);
+async function sendBook(req, res, next) {
+  try {
+    const volume = await db.get('SELECT * FROM volumes WHERE uri=?', req.params.volume)
+    if (!volume) {
+      res.status(404).send({ error: `Volume not found.` });
+      return;
+    }
+    const book = await db.get('SELECT * FROM books WHERE uri=? AND volumeId=?', [
+      req.params.book,
+      volume.id
+    ])
+    if (!book) {
+      res.status(404).send({ error: 'Book not vound in volume.'})
+    }
+    volume.book = book;
+    const chapters = await db.all('SELECT * FROM chapters WHERE bookId=?', book.id)
+    volume.book.chapters = chapters;
+    res.send({ data: { volume } });
+  } catch (err) {
+    next(err);
+  }
 }
 
-function sendChapter(req, res) {
-  res.sendStatus(501);
+async function sendChapter(req, res, next) {
+  try {
+    const volume = await db.get('SELECT * FROM volumes WHERE URI=?', [req.params.volume]);
+    if (!volume) {
+      res.status(404).send({ error: 'Volume not found.' });
+      return;
+    }
+    const book = await db.get('SELECT * FROM books WHERE uri=? AND volumeId=?', [
+      req.params.book, volume.id
+    ])
+    if (!book) {
+      res.status(404).send({ error: 'Book not found in volume.' })
+      return;
+    }
+    volume.book = book;
+    const chapter = await db.get('SELECT * FROM chapters WHERE chapterNumber=? AND bookId=?', [
+      req.params.chapter, book.id
+    ]);
+    if (!chapter) {
+      res.status(404).send({ error: 'Chapter does not exist.' });
+      return;
+    }
+    volume.book.chapter = chapter;
+    const verses = await db.all('SELECT * FROM verses WHERE chapterId=?', chapter.id);
+    volume.book.chapter.verses = verses;
+    res.send({ data: { volume } })
+  } catch (err) {
+    next(err);
+  }
 }
 
 db.open('scriptures.db')
-  .then(() => app.listen(process.env.PORT || 3000))
-  .then(sendVolume)
+  .then(() => app.listen(process.env.PORT || 3000));
