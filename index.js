@@ -14,12 +14,14 @@ app.use((err, req, res, next) => {
 
 async function sendVolume(req, res, next) {
   try {
-    const volume = await db.get('SELECT * FROM volumes WHERE uri=?', req.params.volume);
+    const volume = await db.get(
+      'SELECT * FROM volumes WHERE uri=?', req.params.volume);
     if (!volume) {
       res.status(404).send({ error: `Volume not found.` });
       return;
     }
-    const books = await db.all('SELECT * FROM books WHERE volumeId=?', volume.id)
+    const books = await db.all(
+      'SELECT * FROM books WHERE volumeId=?', volume.id)
     volume.books = books;
     res.send({ data: { volume } });
   } catch (err) {
@@ -29,20 +31,21 @@ async function sendVolume(req, res, next) {
 
 async function sendBook(req, res, next) {
   try {
-    const volume = await db.get('SELECT * FROM volumes WHERE uri=?', req.params.volume)
+    const volume = await db.get(
+      'SELECT * FROM volumes WHERE uri=?', req.params.volume)
     if (!volume) {
       res.status(404).send({ error: `Volume not found.` });
       return;
     }
-    const book = await db.get('SELECT * FROM books WHERE uri=? AND volumeId=?', [
-      req.params.book,
-      volume.id
-    ])
+    const book = await db.get(
+      'SELECT * FROM books WHERE uri=? AND volumeId=?',
+      [req.params.book, volume.id])
     if (!book) {
       res.status(404).send({ error: 'Book not vound in volume.'})
     }
     volume.book = book;
-    const chapters = await db.all('SELECT * FROM chapters WHERE bookId=?', book.id)
+    const chapters = await db.all(
+      'SELECT * FROM chapters WHERE bookId=?', book.id)
     volume.book.chapters = chapters;
     res.send({ data: { volume } });
   } catch (err) {
@@ -52,28 +55,30 @@ async function sendBook(req, res, next) {
 
 async function sendChapter(req, res, next) {
   try {
-    const volume = await db.get('SELECT * FROM volumes WHERE URI=?', [req.params.volume]);
+    const volume = await db.get(
+      'SELECT * FROM volumes WHERE URI=?', req.params.volume);
     if (!volume) {
       res.status(404).send({ error: 'Volume not found.' });
       return;
     }
-    const book = await db.get('SELECT * FROM books WHERE uri=? AND volumeId=?', [
-      req.params.book, volume.id
-    ])
+    const book = await db.get(
+      'SELECT * FROM books WHERE uri=? AND volumeId=?',
+      [req.params.book, volume.id]);
     if (!book) {
       res.status(404).send({ error: 'Book not found in volume.' })
       return;
     }
     volume.book = book;
-    const chapter = await db.get('SELECT * FROM chapters WHERE chapterNumber=? AND bookId=?', [
-      req.params.chapter, book.id
-    ]);
+    const chapter = await db.get(
+      'SELECT * FROM chapters WHERE chapterNumber=? AND bookId=?',
+      [req.params.chapter, book.id]);
     if (!chapter) {
       res.status(404).send({ error: 'Chapter does not exist.' });
       return;
     }
     volume.book.chapter = chapter;
-    const verses = await db.all('SELECT * FROM verses WHERE chapterId=?', chapter.id);
+    const verses = await db.all(
+      'SELECT * FROM verses WHERE chapterId=?', chapter.id);
     volume.book.chapter.verses = verses;
     res.send({ data: { volume } })
   } catch (err) {
