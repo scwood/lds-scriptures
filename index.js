@@ -3,16 +3,26 @@ import db from 'sqlite';
 
 const app = express();
 
-app.get('/:volume', sendVolume);
-app.get('/:volume/:book', sendBook);
-app.get('/:volume/:book/:chapter', sendChapter);
+app.get('/', getVolumes);
+app.get('/:volume', getVolume);
+app.get('/:volume/:book', getBook);
+app.get('/:volume/:book/:chapter', getChapter);
 app.use((err, req, res, next) => {
   console.log(err);
   res.status(500).send({ error: 'Internal server error.' })
   next();
 });
 
-async function sendVolume(req, res, next) {
+async function getVolumes(req, res, next) {
+  try {
+    const volumes = await db.all('SELECT * FROM volumes');
+    res.send({ data: { volumes } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getVolume(req, res, next) {
   try {
     const volume = await db.get(
       'SELECT * FROM volumes WHERE uri=?', req.params.volume);
@@ -29,7 +39,7 @@ async function sendVolume(req, res, next) {
   }
 }
 
-async function sendBook(req, res, next) {
+async function getBook(req, res, next) {
   try {
     const volume = await db.get(
       'SELECT * FROM volumes WHERE uri=?', req.params.volume)
@@ -53,7 +63,7 @@ async function sendBook(req, res, next) {
   }
 }
 
-async function sendChapter(req, res, next) {
+async function getChapter(req, res, next) {
   try {
     const volume = await db.get(
       'SELECT * FROM volumes WHERE URI=?', req.params.volume);
