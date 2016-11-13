@@ -44,14 +44,14 @@ async function getBook(req, res, next) {
     const volume = await db.get(
       'SELECT * FROM volumes WHERE uri=?', req.params.volume)
     if (!volume) {
-      res.status(404).send({ error: `Volume not found.` });
+      res.status(404).send({ error: 'Volume not found.' });
       return;
     }
     const book = await db.get(
       'SELECT * FROM books WHERE uri=? AND volumeId=?',
       [req.params.book, volume.id])
     if (!book) {
-      res.status(404).send({ error: 'Book not vound in volume.'})
+      res.status(404).send({ error: 'Book not found in volume.'})
     }
     const chapters = await db.all(
       'SELECT * FROM chapters WHERE bookId=?', book.id)
