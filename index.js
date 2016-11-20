@@ -1,8 +1,10 @@
-import express from 'express';
+import cors from 'cors';
 import db from 'sqlite';
+import express from 'express';
 
 const app = express();
 
+app.use(cors());
 app.get('/', getVolumes);
 app.get('/:volume', getVolume);
 app.get('/:volume/:book', getBook);
