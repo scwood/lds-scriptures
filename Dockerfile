@@ -8,6 +8,5 @@ RUN npm install
 
 COPY index.js scriptures.db /app/
 RUN npm run build
-RUN npm prune --production
 
 CMD ["npm", "run", "start:production"]
